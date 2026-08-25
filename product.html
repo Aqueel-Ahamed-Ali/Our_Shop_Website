@@ -18,7 +18,7 @@
       flex-direction: column;
     }
 
-    /* ===== HEADER (same as index.html) ===== */
+    /* ===== HEADER ===== */
     .site-header {
       background-color: #000000;
       padding: 5px 35px 5px 10px;
@@ -73,7 +73,7 @@
       margin: 20px auto 60px;
       padding: 0 20px;
       display: grid;
-      grid-template-columns: 1.3fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 50px;
     }
 
@@ -81,8 +81,13 @@
       .product-detail { grid-template-columns: 1fr; gap: 30px; }
     }
 
-    /* ---- Gallery / zoom column ---- */
-    .gallery-col { display: flex; flex-direction: column; gap: 16px; }
+    /* ---- Gallery & Popout Zoom ---- */
+    .gallery-col {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
     .zoom-frame {
       position: relative;
@@ -92,7 +97,7 @@
       border-radius: 8px;
       border: 1px solid #e0e0e0;
       background: #f5f5f5;
-      cursor: zoom-in;
+      cursor: crosshair;
     }
 
     .zoom-frame img {
@@ -100,15 +105,36 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transform-origin: center center;
-      transition: transform 0.25s ease;
     }
 
-    /* Hover-zoom: desktop only, follows mouse position via JS-set transform-origin */
-    @media (hover: hover) and (pointer: fine) {
-      .zoom-frame:hover img {
-        transform: scale(2);
-      }
+    .zoom-lens {
+      position: absolute;
+      border: 1px solid #a68a5b;
+      background-color: rgba(166, 138, 91, 0.25);
+      width: 120px;
+      height: 120px;
+      display: none;
+      pointer-events: none;
+    }
+
+    .zoom-result {
+      position: absolute;
+      top: 0;
+      left: calc(100% + 20px);
+      width: 500px;
+      height: 500px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-repeat: no-repeat;
+      background-color: #ffffff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      display: none;
+      z-index: 99;
+    }
+
+    @media (max-width: 800px) {
+      .zoom-result, .zoom-lens { display: none !important; }
+      .zoom-frame { cursor: default; }
     }
 
     .swatch-strip {
@@ -190,7 +216,7 @@
       gap: 10px;
       width: 100%;
       padding: 16px;
-      background-color: #25D366; /* WhatsApp green */
+      background-color: #25D366;
       color: #ffffff;
       border: none;
       border-radius: 6px;
@@ -254,9 +280,7 @@
     }
 
     .related-card .rc-info { padding: 12px; }
-
     .related-card .rc-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
-
     .related-card .rc-price { font-size: 0.9rem; font-weight: 700; }
 
     /* ===== FOOTER ===== */
@@ -297,9 +321,7 @@
   </header>
   <!-- HEADER END -->
 
-  <main class="page-content" id="page-content">
-    <!-- Content is injected by JavaScript based on ?id= in the URL -->
-  </main>
+  <main class="page-content" id="page-content"></main>
 
   <!-- FOOTER START -->
   <footer class="site-footer">
@@ -311,24 +333,11 @@
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // ---- SHOP CONTACT NUMBER FOR WHATSAPP ORDERS ----
-    // WhatsApp deep links require international format WITHOUT + or leading 0.
-    // Sri Lanka country code is 94. Mobile 070 734 5670 -> 94707345670
     const SHOP_WHATSAPP_NUMBER = "94707345670";
 
-    const params = new URLSearchParams(window.location.search);
-    const productId = params.get('id');
-    const product = getProductById(productId);
+    // ---- HELPER & RENDER FUNCTIONS (Declared first) ----
 
-    const pageContent = document.getElementById('page-content');
-
-    if (!product) {
-      renderNotFound();
-    } else {
-      renderProduct(product);
-    }
-
-    function renderNotFound() {
+    function renderNotFound(pageContent) {
       pageContent.innerHTML = `
         <div class="not-found">
           <h1>Product Not Found</h1>
@@ -342,10 +351,123 @@
       `;
     }
 
-    function renderProduct(product) {
+    function selectColor(product, index) {
+      const variant = product.colors[index];
+
+      document.getElementById('main-image').src = variant.image;
+      document.getElementById('main-image').alt = `${product.name} - ${variant.color}`;
+      document.getElementById('detail-price').textContent = formatPrice(variant.price);
+      document.getElementById('selected-color-name').textContent = variant.color;
+      document.getElementById('sku-note').textContent = `SKU: ${variant.skuCode}`;
+
+      const message =
+        `Hello ABG LAALIB, I'd like to order:\n` +
+        `Product: ${product.name}\n` +
+        `Color: ${variant.color}\n` +
+        `SKU: ${variant.skuCode}\n` +
+        `Price: ${formatPrice(variant.price)}\n` +
+        `Quantity: `;
+
+      const encodedMessage = encodeURIComponent(message);
+      document.getElementById('order-btn').href =
+        `https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    }
+
+    function renderSwatches(product, activeIndex) {
+      const strip = document.getElementById('swatch-strip');
+      strip.innerHTML = product.colors.map((c, index) => `
+        <button
+          class="swatch ${index === activeIndex ? 'active' : ''}"
+          data-index="${index}"
+          title="${c.color}"
+          aria-label="Select color ${c.color}"
+        >
+          <img src="${c.image}" alt="${product.name} - ${c.color}">
+        </button>
+      `).join('');
+
+      strip.querySelectorAll('.swatch').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const index = Number(btn.dataset.index);
+          selectColor(product, index);
+          strip.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    }
+
+    function renderZoomBehavior() {
+      const frame = document.getElementById('zoom-frame');
+      const img = document.getElementById('main-image');
+      const lens = document.getElementById('zoom-lens');
+      const result = document.getElementById('zoom-result');
+
+      frame.addEventListener('mouseenter', () => {
+        if (window.innerWidth < 800) return;
+        lens.style.display = 'block';
+        result.style.display = 'block';
+        result.style.backgroundImage = `url('${img.src}')`;
+      });
+
+      frame.addEventListener('mouseleave', () => {
+        lens.style.display = 'none';
+        result.style.display = 'none';
+      });
+
+      frame.addEventListener('mousemove', (e) => {
+        if (window.innerWidth < 800) return;
+
+        const rect = frame.getBoundingClientRect();
+        let x = e.clientX - rect.left - (lens.offsetWidth / 2);
+        let y = e.clientY - rect.top - (lens.offsetHeight / 2);
+
+        if (x > frame.offsetWidth - lens.offsetWidth) {
+          x = frame.offsetWidth - lens.offsetWidth;
+        }
+        if (x < 0) { x = 0; }
+        if (y > frame.offsetHeight - lens.offsetHeight) {
+          y = frame.offsetHeight - lens.offsetHeight;
+        }
+        if (y < 0) { y = 0; }
+
+        lens.style.left = x + 'px';
+        lens.style.top = y + 'px';
+
+        const cx = result.offsetWidth / lens.offsetWidth;
+        const cy = result.offsetHeight / lens.offsetHeight;
+
+        result.style.backgroundSize = `${frame.offsetWidth * cx}px ${frame.offsetHeight * cy}px`;
+        result.style.backgroundPosition = `-${x * cx}px -${y * cy}px`;
+      });
+    }
+
+    function renderRelated(currentProduct) {
+      const others = PRODUCTS.filter(p => p.id !== currentProduct.id).slice(0, 4);
+      if (others.length === 0) return;
+
+      const section = document.getElementById('related-section');
+      section.innerHTML = `
+        <h2 class="related-title">You May Also Like</h2>
+        <div class="related-grid">
+          ${others.map(p => {
+            const preview = p.colors[0];
+            return `
+              <a class="related-card" href="product.html?id=${p.id}">
+                <img src="${preview.image}" alt="${p.name}">
+                <div class="rc-info">
+                  <p class="rc-title">${p.name}</p>
+                  <p class="rc-price">${formatPrice(preview.price)}</p>
+                </div>
+              </a>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderProduct(product, pageContent) {
       document.getElementById('page-title').textContent = `${product.name} — LAALIB`;
 
-      // Track which color/SKU is currently selected. Default to the first one.
       let selectedIndex = 0;
 
       pageContent.innerHTML = `
@@ -359,8 +481,10 @@
           <div class="gallery-col">
             <div class="zoom-frame" id="zoom-frame">
               <img id="main-image" src="" alt="">
+              <div class="zoom-lens" id="zoom-lens"></div>
             </div>
             <div class="swatch-strip" id="swatch-strip"></div>
+            <div class="zoom-result" id="zoom-result"></div>
           </div>
 
           <div class="info-col">
@@ -393,94 +517,16 @@
       renderRelated(product);
     }
 
-    // Draws the row of small color-swatch thumbnails below the main image
-    function renderSwatches(product, activeIndex) {
-      const strip = document.getElementById('swatch-strip');
-      strip.innerHTML = product.colors.map((c, index) => `
-        <button
-          class="swatch ${index === activeIndex ? 'active' : ''}"
-          data-index="${index}"
-          title="${c.color}"
-          aria-label="Select color ${c.color}"
-        >
-          <img src="${c.image}" alt="${product.name} - ${c.color}">
-        </button>
-      `).join('');
+    // ---- MAIN INITIALIZATION ----
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+    const product = getProductById(productId);
+    const pageContent = document.getElementById('page-content');
 
-      strip.querySelectorAll('.swatch').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const index = Number(btn.dataset.index);
-          selectColor(product, index);
-          strip.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
-          btn.classList.add('active');
-        });
-      });
-    }
-
-    // Updates main image, price, color label, and WhatsApp link for the chosen color/SKU
-    function selectColor(product, index) {
-      const variant = product.colors[index];
-
-      document.getElementById('main-image').src = variant.image;
-      document.getElementById('main-image').alt = `${product.name} - ${variant.color}`;
-      document.getElementById('detail-price').textContent = formatPrice(variant.price);
-      document.getElementById('selected-color-name').textContent = variant.color;
-      document.getElementById('sku-note').textContent = `SKU: ${variant.skuCode}`;
-
-      // Build the WhatsApp pre-filled message with the EXACT color/SKU chosen
-      const message =
-        `Hello ABG LAALIB, I'd like to order:\n` +
-        `Product: ${product.name}\n` +
-        `Color: ${variant.color}\n` +
-        `SKU: ${variant.skuCode}\n` +
-        `Price: ${formatPrice(variant.price)}\n` +
-        `Quantity: `; // customer fills in quantity in WhatsApp before sending
-
-      const encodedMessage = encodeURIComponent(message);
-      document.getElementById('order-btn').href =
-        `https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodedMessage}`;
-    }
-
-    // Daraz-style hover zoom: the image scales up and follows the cursor position
-    function renderZoomBehavior() {
-      const frame = document.getElementById('zoom-frame');
-      const img = document.getElementById('main-image');
-
-      frame.addEventListener('mousemove', (e) => {
-        const rect = frame.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        img.style.transformOrigin = `${x}% ${y}%`;
-      });
-
-      frame.addEventListener('mouseleave', () => {
-        img.style.transformOrigin = 'center center';
-      });
-    }
-
-    // Shows other products (excluding the current one) as a "You may also like" strip
-    function renderRelated(currentProduct) {
-      const others = PRODUCTS.filter(p => p.id !== currentProduct.id).slice(0, 4);
-      if (others.length === 0) return;
-
-      const section = document.getElementById('related-section');
-      section.innerHTML = `
-        <h2 class="related-title">You May Also Like</h2>
-        <div class="related-grid">
-          ${others.map(p => {
-            const preview = p.colors[0];
-            return `
-              <a class="related-card" href="product.html?id=${p.id}">
-                <img src="${preview.image}" alt="${p.name}">
-                <div class="rc-info">
-                  <p class="rc-title">${p.name}</p>
-                  <p class="rc-price">${formatPrice(preview.price)}</p>
-                </div>
-              </a>
-            `;
-          }).join('')}
-        </div>
-      `;
+    if (!product) {
+      renderNotFound(pageContent);
+    } else {
+      renderProduct(product, pageContent);
     }
   </script>
 
