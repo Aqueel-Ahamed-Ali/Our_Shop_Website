@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Product — LAALIB</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== HEADER (same as index.html) ===== */
+    .site-header {
+      background-color: #000000;
+      padding: 5px 35px 5px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 200px;
+    }
+    .logo-container { display: flex; align-items: center; text-decoration: none; }
+    .logo-patch {
+      background-color: #ece5db;
+      border-radius: 12px;
+      padding: 10px 22px;
+      display: flex;
+      align-items: center;
+    }
+    .logo-patch img { height: 110px; width: auto; display: block; object-fit: contain; }
+    @media (max-width: 600px) {
+      .logo-patch { padding: 8px 16px; }
+      .logo-patch img { height: 70px; }
+    }
+    .navbar { display: flex; gap: 25px; }
+    .navbar a {
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      font-size: 1.25rem;
+      transition: opacity 0.2s ease;
+    }
+    .navbar a:hover { opacity: 0.7; }
+    .navbar a[aria-current="page"] { border-bottom: 2px solid #a68a5b; padding-bottom: 2px; }
+    @media (max-width: 600px) {
+      .site-header { height: auto; padding: 12px 15px; flex-direction: column; gap: 10px; }
+    }
+
+    main.page-content { flex: 1; }
+
+    /* ===== BREADCRUMB ===== */
+    .breadcrumb {
+      max-width: 1100px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+      font-size: 0.9rem;
+      color: #6b6b6b;
+    }
+    .breadcrumb a { color: #6b6b6b; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* ===== PRODUCT DETAIL LAYOUT ===== */
+    .product-detail {
+      max-width: 1100px;
+      margin: 20px auto 60px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+    }
+
+    @media (max-width: 800px) {
+      .product-detail { grid-template-columns: 1fr; gap: 30px; }
+    }
+
+    /* ---- Gallery / zoom column ---- */
+    .gallery-col { display: flex; flex-direction: column; gap: 16px; }
+
+    .zoom-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      background: #f5f5f5;
+      cursor: zoom-in;
+    }
+
+    .zoom-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center center;
+      transition: transform 0.25s ease;
+    }
+
+    /* Hover-zoom: desktop only, follows mouse position via JS-set transform-origin */
+    @media (hover: hover) and (pointer: fine) {
+      .zoom-frame:hover img {
+        transform: scale(2);
+      }
+    }
+
+    .swatch-strip {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .swatch img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .swatch:hover { transform: translateY(-2px); }
+
+    .swatch.active {
+      border-color: #a68a5b;
+    }
+
+    /* ---- Info column ---- */
+    .info-col { display: flex; flex-direction: column; }
+
+    .product-category-tag {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #a68a5b;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .detail-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #111111;
+    }
+
+    .detail-price {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #000000;
+      margin-bottom: 20px;
+    }
+
+    .detail-description {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #333333;
+      margin-bottom: 24px;
+    }
+
+    .color-select-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .selected-color-name {
+      font-weight: 400;
+      color: #6b6b6b;
+    }
+
+    .color-picker-block { margin-bottom: 28px; }
+
+    .order-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      background-color: #25D366; /* WhatsApp green */
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+      margin-bottom: 12px;
+    }
+
+    .order-btn:hover { opacity: 0.85; }
+
+    .sku-note {
+      font-size: 0.8rem;
+      color: #9a9a9a;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    /* ===== RELATED PRODUCTS ===== */
+    .related-section {
+      max-width: 1100px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .related-title {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .related-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .related-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    }
+
+    .related-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: #f5f5f5;
+    }
+
+    .related-card .rc-info { padding: 12px; }
+
+    .related-card .rc-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+
+    .related-card .rc-price { font-size: 0.9rem; font-weight: 700; }
+
+    /* ===== FOOTER ===== */
+    .site-footer {
+      margin-top: auto;
+      width: 100%;
+      text-align: center;
+      background-color: #000000;
+      color: #faf6f6;
+      padding: 10px 12px;
+      border-top: 1px solid #eaeaea;
+      font-size: 0.78rem;
+    }
+
+    .not-found {
+      max-width: 600px;
+      margin: 80px auto;
+      text-align: center;
+      padding: 0 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER START -->
+  <header class="site-header">
+    <a href="index.html" class="logo-container">
+      <span class="logo-patch">
+        <img src="laalib1.jpg" alt="LAALIB Shop Logo">
+      </span>
+    </a>
+    <nav class="navbar">
+      <a href="index.html">Home</a>
+      <a href="index.html#catalog" aria-current="page">Catalog &amp; Prices</a>
+      <a href="about.html">About Us</a>
+      <a href="about.html#contact-info">Contact Us</a>
+    </nav>
+  </header>
+  <!-- HEADER END -->
+
+  <main class="page-content" id="page-content">
+    <!-- Content is injected by JavaScript based on ?id= in the URL -->
+  </main>
+
+  <!-- FOOTER START -->
+  <footer class="site-footer">
+    <p>&copy; <span id="year"></span> ABG. All rights reserved.</p>
+  </footer>
+  <!-- FOOTER END -->
+
+  <script src="products.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ---- SHOP CONTACT NUMBER FOR WHATSAPP ORDERS ----
+    // WhatsApp deep links require international format WITHOUT + or leading 0.
+    // Sri Lanka country code is 94. Mobile 070 734 5670 -> 94707345670
+    const SHOP_WHATSAPP_NUMBER = "94707345670";
+
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+    const product = getProductById(productId);
+
+    const pageContent = document.getElementById('page-content');
+
+    if (!product) {
+      renderNotFound();
+    } else {
+      renderProduct(product);
+    }
+
+    function renderNotFound() {
+      pageContent.innerHTML = `
+        <div class="not-found">
+          <h1>Product Not Found</h1>
+          <p style="margin-top:12px; color:#6b6b6b;">
+            This product may have been removed or the link is incorrect.
+          </p>
+          <a href="index.html" style="display:inline-block; margin-top:20px; color:#a68a5b; font-weight:600;">
+            &larr; Back to Catalog
+          </a>
+        </div>
+      `;
+    }
+
+    function renderProduct(product) {
+      document.getElementById('page-title').textContent = `${product.name} — LAALIB`;
+
+      // Track which color/SKU is currently selected. Default to the first one.
+      let selectedIndex = 0;
+
+      pageContent.innerHTML = `
+        <div class="breadcrumb">
+          <a href="index.html">Home</a> &nbsp;/&nbsp;
+          <a href="index.html#catalog">Catalog</a> &nbsp;/&nbsp;
+          <span id="breadcrumb-name"></span>
+        </div>
+
+        <section class="product-detail">
+          <div class="gallery-col">
+            <div class="zoom-frame" id="zoom-frame">
+              <img id="main-image" src="" alt="">
+            </div>
+            <div class="swatch-strip" id="swatch-strip"></div>
+          </div>
+
+          <div class="info-col">
+            <p class="product-category-tag">${product.category}</p>
+            <h1 class="detail-title">${product.name}</h1>
+            <p class="detail-price" id="detail-price"></p>
+            <p class="detail-description">${product.description}</p>
+
+            <div class="color-picker-block">
+              <p class="color-select-label">
+                Color: <span class="selected-color-name" id="selected-color-name"></span>
+              </p>
+            </div>
+
+            <a class="order-btn" id="order-btn" target="_blank" rel="noopener">
+              Order via WhatsApp
+            </a>
+            <p class="sku-note" id="sku-note"></p>
+          </div>
+        </section>
+
+        <section class="related-section" id="related-section"></section>
+      `;
+
+      document.getElementById('breadcrumb-name').textContent = product.name;
+
+      renderSwatches(product, selectedIndex);
+      selectColor(product, selectedIndex);
+      renderZoomBehavior();
+      renderRelated(product);
+    }
+
+    // Draws the row of small color-swatch thumbnails below the main image
+    function renderSwatches(product, activeIndex) {
+      const strip = document.getElementById('swatch-strip');
+      strip.innerHTML = product.colors.map((c, index) => `
+        <button
+          class="swatch ${index === activeIndex ? 'active' : ''}"
+          data-index="${index}"
+          title="${c.color}"
+          aria-label="Select color ${c.color}"
+        >
+          <img src="${c.image}" alt="${product.name} - ${c.color}">
+        </button>
+      `).join('');
+
+      strip.querySelectorAll('.swatch').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const index = Number(btn.dataset.index);
+          selectColor(product, index);
+          strip.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    }
+
+    // Updates main image, price, color label, and WhatsApp link for the chosen color/SKU
+    function selectColor(product, index) {
+      const variant = product.colors[index];
+
+      document.getElementById('main-image').src = variant.image;
+      document.getElementById('main-image').alt = `${product.name} - ${variant.color}`;
+      document.getElementById('detail-price').textContent = formatPrice(variant.price);
+      document.getElementById('selected-color-name').textContent = variant.color;
+      document.getElementById('sku-note').textContent = `SKU: ${variant.skuCode}`;
+
+      // Build the WhatsApp pre-filled message with the EXACT color/SKU chosen
+      const message =
+        `Hello ABG LAALIB, I'd like to order:\n` +
+        `Product: ${product.name}\n` +
+        `Color: ${variant.color}\n` +
+        `SKU: ${variant.skuCode}\n` +
+        `Price: ${formatPrice(variant.price)}\n` +
+        `Quantity: `; // customer fills in quantity in WhatsApp before sending
+
+      const encodedMessage = encodeURIComponent(message);
+      document.getElementById('order-btn').href =
+        `https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    }
+
+    // Daraz-style hover zoom: the image scales up and follows the cursor position
+    function renderZoomBehavior() {
+      const frame = document.getElementById('zoom-frame');
+      const img = document.getElementById('main-image');
+
+      frame.addEventListener('mousemove', (e) => {
+        const rect = frame.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        img.style.transformOrigin = `${x}% ${y}%`;
+      });
+
+      frame.addEventListener('mouseleave', () => {
+        img.style.transformOrigin = 'center center';
+      });
+    }
+
+    // Shows other products (excluding the current one) as a "You may also like" strip
+    function renderRelated(currentProduct) {
+      const others = PRODUCTS.filter(p => p.id !== currentProduct.id).slice(0, 4);
+      if (others.length === 0) return;
+
+      const section = document.getElementById('related-section');
+      section.innerHTML = `
+        <h2 class="related-title">You May Also Like</h2>
+        <div class="related-grid">
+          ${others.map(p => {
+            const preview = p.colors[0];
+            return `
+              <a class="related-card" href="product.html?id=${p.id}">
+                <img src="${preview.image}" alt="${p.name}">
+                <div class="rc-info">
+                  <p class="rc-title">${p.name}</p>
+                  <p class="rc-price">${formatPrice(preview.price)}</p>
+                </div>
+              </a>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+  </script>
+
+</body>
+</html>
