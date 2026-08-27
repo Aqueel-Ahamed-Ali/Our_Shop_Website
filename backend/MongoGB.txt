@@ -1,3 +1,4 @@
-// MOngoDB
-// Username : aqueelforengineering_db_user
-// Password : RRVK7Kb1QeHCcd5h
+MOngoDB
+Username : ABGLAALIB
+Password : RRVK7Kb1QeHCcd5h
+connection string into your application code: mongodb+srv://ABGLAALIB:RRVK7Kb1QeHCcd5h@abglaalib.vyl7ydg.mongodb.net/?appName=ABGLaaliB
