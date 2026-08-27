@@ -12,3 +12,6 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+#Hide MongoGB.txt file 
+backend/MongoGB.txt
