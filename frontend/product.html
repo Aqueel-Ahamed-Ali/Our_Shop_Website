@@ -21,24 +21,23 @@
     /* ===== HEADER ===== */
     .site-header {
       background-color: #000000;
-      padding: 5px 35px 5px 10px;
+      padding: 12px 35px 12px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 200px;
     }
     .logo-container { display: flex; align-items: center; text-decoration: none; }
     .logo-patch {
       background-color: #ece5db;
       border-radius: 12px;
-      padding: 10px 22px;
+      padding: 8px 20px;
       display: flex;
       align-items: center;
     }
-    .logo-patch img { height: 110px; width: auto; display: block; object-fit: contain; }
+    .logo-patch img { height: 64px; width: auto; display: block; object-fit: contain; }
     @media (max-width: 600px) {
-      .logo-patch { padding: 8px 16px; }
-      .logo-patch img { height: 70px; }
+      .logo-patch { padding: 6px 14px; }
+      .logo-patch img { height: 48px; }
     }
     .navbar { display: flex; gap: 25px; }
     .navbar a {
@@ -102,7 +101,8 @@
     .zoom-frame {
       position: relative;
       width: 100%;
-      aspect-ratio: 1 / 1;
+      aspect-ratio: 4 / 5;
+      max-height: 480px;
       overflow: hidden;
       border-radius: 8px;
       border: 1px solid #e0e0e0;
