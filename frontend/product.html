@@ -57,10 +57,22 @@
     main.page-content { flex: 1; }
 
     /* ===== BREADCRUMB ===== */
+    /* ===== PAGE WRAPPER (Daraz-style boxed container) ===== */
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 24px;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 800px) {
+      .page-wrapper { margin: 12px; padding: 16px; }
+    }
+
     .breadcrumb {
-      max-width: 1100px;
-      margin: 24px auto 0;
-      padding: 0 20px;
+      margin: 0 0 20px;
       font-size: 0.9rem;
       color: #6b6b6b;
     }
@@ -69,12 +81,10 @@
 
     /* ===== PRODUCT DETAIL LAYOUT ===== */
     .product-detail {
-      max-width: 1000px;
-      margin: 20px auto 60px;
-      padding: 0 20px;
+      margin: 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 50px;
+      gap: 40px;
     }
 
     @media (max-width: 800px) {
@@ -238,9 +248,16 @@
 
     /* ===== RELATED PRODUCTS ===== */
     .related-section {
-      max-width: 1000px;
-      margin: 0 0 60px;
-      padding: 0 20px;
+      max-width: 1200px;
+      margin: 0 auto 24px;
+      padding: 24px;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 800px) {
+      .related-section { margin: 0 12px 24px; padding: 16px; }
     }
 
     .related-title {
@@ -471,40 +488,42 @@
       let selectedIndex = 0;
 
       pageContent.innerHTML = `
-        <div class="breadcrumb">
-          <a href="index.html">Home</a> &nbsp;/&nbsp;
-          <a href="index.html#catalog">Catalog</a> &nbsp;/&nbsp;
-          <span id="breadcrumb-name"></span>
+        <div class="page-wrapper">
+          <div class="breadcrumb">
+            <a href="index.html">Home</a> &nbsp;/&nbsp;
+            <a href="index.html#catalog">Catalog</a> &nbsp;/&nbsp;
+            <span id="breadcrumb-name"></span>
+          </div>
+
+          <section class="product-detail">
+            <div class="gallery-col">
+              <div class="zoom-frame" id="zoom-frame">
+                <img id="main-image" src="" alt="">
+                <div class="zoom-lens" id="zoom-lens"></div>
+              </div>
+              <div class="swatch-strip" id="swatch-strip"></div>
+              <div class="zoom-result" id="zoom-result"></div>
+            </div>
+
+            <div class="info-col">
+              <p class="product-category-tag">${product.category}</p>
+              <h1 class="detail-title">${product.name}</h1>
+              <p class="detail-price" id="detail-price"></p>
+              <p class="detail-description">${product.description}</p>
+
+              <div class="color-picker-block">
+                <p class="color-select-label">
+                  Color: <span class="selected-color-name" id="selected-color-name"></span>
+                </p>
+              </div>
+
+              <a class="order-btn" id="order-btn" target="_blank" rel="noopener">
+                Order via WhatsApp
+              </a>
+              <p class="sku-note" id="sku-note"></p>
+            </div>
+          </section>
         </div>
-
-        <section class="product-detail">
-          <div class="gallery-col">
-            <div class="zoom-frame" id="zoom-frame">
-              <img id="main-image" src="" alt="">
-              <div class="zoom-lens" id="zoom-lens"></div>
-            </div>
-            <div class="swatch-strip" id="swatch-strip"></div>
-            <div class="zoom-result" id="zoom-result"></div>
-          </div>
-
-          <div class="info-col">
-            <p class="product-category-tag">${product.category}</p>
-            <h1 class="detail-title">${product.name}</h1>
-            <p class="detail-price" id="detail-price"></p>
-            <p class="detail-description">${product.description}</p>
-
-            <div class="color-picker-block">
-              <p class="color-select-label">
-                Color: <span class="selected-color-name" id="selected-color-name"></span>
-              </p>
-            </div>
-
-            <a class="order-btn" id="order-btn" target="_blank" rel="noopener">
-              Order via WhatsApp
-            </a>
-            <p class="sku-note" id="sku-note"></p>
-          </div>
-        </section>
 
         <section class="related-section" id="related-section"></section>
       `;
