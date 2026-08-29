@@ -37,28 +37,27 @@
      ============================================================ */
   .site-header {
     background-color: #000000;
-    padding: 5px 35px 5px 10px;
+    padding: 12px 35px 12px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 200px;
   }
   .logo-container { display: flex; align-items: center; text-decoration: none; }
   .logo-patch {
     background-color: #ece5db;
     border-radius: 12px;
-    padding: 10px 22px;
+    padding: 8px 20px;
     display: flex;
     align-items: center;
   }
-  .logo-patch img { height: 110px; width: auto; display: block; object-fit: contain; }
+  .logo-patch img { height: 64px; width: auto; display: block; object-fit: contain; }
   .navbar { display: flex; gap: 25px; }
   .navbar a { text-decoration: none; color: #ffffff; font-weight: 500; font-size: 1.25rem; transition: opacity 0.2s ease; }
   .navbar a:hover { opacity: 0.7; }
   .navbar a[aria-current="page"] { border-bottom: 2px solid var(--brass); padding-bottom: 2px; }
   @media (max-width: 600px) {
-    .logo-patch { padding: 8px 16px; }
-    .logo-patch img { height: 70px; }
+    .logo-patch { padding: 6px 14px; }
+    .logo-patch img { height: 48px; }
     .site-header { height: auto; padding: 12px 15px; flex-direction: column; gap: 10px; }
   }
 
