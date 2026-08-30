@@ -1,23 +1,40 @@
 const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
+const Product = require("./models/product.js");
 
 const app = express();
 const PORT = 3000;
 
-// Allows our server to understand JSON sent from the browser (needed later for admin panel)
 app.use(express.json());
 
-// Connect to MongoDB using Mongoose
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("MongoDB connected successfully (via Mongoose)!");
 
-    app.get("/api/test", (req, res) => {
-      res.json({
-        success: true,
-        message: "ABG LAALIB backend is connected to MongoDB!"
-      });
+    // GET all products — used by index.html to build the catalog grid
+    app.get("/api/products", async (req, res) => {
+      try {
+        const products = await Product.find();
+        res.json(products);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Failed to fetch products." });
+      }
+    });
+
+    // GET one product by its MongoDB _id — used by product.html detail page
+    app.get("/api/products/:id", async (req, res) => {
+      try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+          return res.status(404).json({ success: false, message: "Product not found." });
+        }
+        res.json(product);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Failed to fetch product." });
+      }
     });
 
     app.listen(PORT, () => {
