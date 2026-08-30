@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
-const Product = require("./models/Product.js");
+const Product = require("./models/product.js");
 
 // The same product data currently in frontend/products.js,
 // rewritten as plain JavaScript objects (no PRODUCTS array wrapper,
