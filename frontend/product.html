@@ -239,6 +239,27 @@
 
     .order-btn:hover { opacity: 0.85; }
 
+    .attach-reminder {
+      display: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #146c2e;
+      background-color: #e6f7ea;
+      border: 1px solid #b8e6c4;
+      border-radius: 6px;
+      padding: 10px 12px;
+      text-align: center;
+      margin-bottom: 12px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .attach-reminder.visible { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .sku-note {
       font-size: 0.8rem;
       color: #9a9a9a;
@@ -368,6 +389,10 @@
       `;
     }
 
+    // Tracks the currently selected variant so the order button
+    // always knows which image/message to use, without re-reading the DOM.
+    let currentOrder = null;
+
     function selectColor(product, index) {
       const variant = product.colors[index];
 
@@ -385,9 +410,65 @@
         `Price: ${formatPrice(variant.price)}\n` +
         `Quantity: `;
 
-      const encodedMessage = encodeURIComponent(message);
-      document.getElementById('order-btn').href =
-        `https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodedMessage}`;
+      const whatsappUrl =
+        `https://wa.me/${SHOP_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+
+      // Store everything the order button click handler needs.
+      currentOrder = {
+        imagePath: variant.image,
+        // File name customers will see in their downloads, e.g. "LAALIB-CLI-BLK.jpg"
+        downloadName: `LAALIB-${variant.skuCode}${getFileExtension(variant.image)}`,
+        whatsappUrl
+      };
+    }
+
+    // Pulls the file extension (".jpg", ".png", etc.) off an image path
+    // so the downloaded file keeps a sensible name.
+    function getFileExtension(path) {
+      const match = path.match(/\.[a-zA-Z0-9]+$/);
+      return match ? match[0] : '.jpg';
+    }
+
+    // Downloads the product image, then opens WhatsApp with the pre-filled
+    // message, then briefly shows a reminder to attach the photo.
+    // WhatsApp's click-to-chat links cannot attach images directly (a
+    // platform limitation), so this is the closest automatic workaround.
+    async function handleOrderClick() {
+      if (!currentOrder) return;
+
+      try {
+        await downloadImage(currentOrder.imagePath, currentOrder.downloadName);
+      } catch (err) {
+        // If the download fails (e.g. blocked by browser), we still let
+        // the order proceed via WhatsApp rather than blocking the customer.
+        console.warn('Image download failed, continuing to WhatsApp:', err);
+      }
+
+      window.open(currentOrder.whatsappUrl, '_blank', 'noopener');
+
+      const banner = document.getElementById('attach-reminder');
+      banner.classList.add('visible');
+      clearTimeout(banner._hideTimer);
+      banner._hideTimer = setTimeout(() => {
+        banner.classList.remove('visible');
+      }, 6000);
+    }
+
+    // Fetches the image as a blob and triggers a real file download
+    // (rather than just opening the image in a new tab).
+    async function downloadImage(imagePath, downloadName) {
+      const response = await fetch(imagePath);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = downloadName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(blobUrl);
     }
 
     function renderSwatches(product, activeIndex) {
@@ -517,9 +598,12 @@
                 </p>
               </div>
 
-              <a class="order-btn" id="order-btn" target="_blank" rel="noopener">
+              <button class="order-btn" id="order-btn" type="button">
                 Order via WhatsApp
-              </a>
+              </button>
+              <p class="attach-reminder" id="attach-reminder">
+                📥 Photo saved to your downloads — attach it (📎) in WhatsApp before sending!
+              </p>
               <p class="sku-note" id="sku-note"></p>
             </div>
           </section>
@@ -534,6 +618,8 @@
       selectColor(product, selectedIndex);
       renderZoomBehavior();
       renderRelated(product);
+
+      document.getElementById('order-btn').addEventListener('click', handleOrderClick);
     }
 
     // ---- MAIN INITIALIZATION ----
