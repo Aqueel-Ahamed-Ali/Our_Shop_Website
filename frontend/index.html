@@ -222,7 +222,76 @@
   <!-- FOOTER END -->
 
   <!-- Load shared product data -->
-  <script src="products.js"></script>
+  <script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const API_URL = "http://localhost:3000/api/products";
+
+  // Format a number as Sri Lankan Rupees, e.g. 4999 -> "Rs. 4,999"
+  function formatPrice(amount) {
+    return "Rs. " + amount.toLocaleString("en-LK");
+  }
+
+  // If all colors share the same price, show one price.
+  // If prices differ across colors, show "From Rs. X" (lowest price).
+  function getPriceRangeLabel(product) {
+    const prices = product.colors.map(c => c.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return min === max ? formatPrice(min) : `From ${formatPrice(min)}`;
+  }
+
+  // Build one catalog card per product, using data fetched from the API
+  function buildCatalog(products) {
+    const grid = document.getElementById('product-grid');
+    const cardsHtml = products.map(product => {
+      const preview = product.colors[0];
+      const priceRange = getPriceRangeLabel(product);
+      const colorNote = product.colors.length > 1
+        ? `${product.colors.length} colors available`
+        : `1 color available`;
+
+      return `
+        <a class="product-card" href="product.html?id=${product._id}">
+          <img
+            class="product-image"
+            src="${preview.image}"
+            alt="${product.name} - ${preview.color}"
+            loading="lazy"
+          >
+          <div class="product-info">
+            <h2 class="product-title">${product.name}</h2>
+            <p class="product-price">${priceRange}</p>
+            <p class="product-colors-note">${colorNote}</p>
+            <span class="view-btn">View Details</span>
+          </div>
+        </a>
+      `;
+    }).join('');
+
+    grid.innerHTML = cardsHtml;
+  }
+
+  // Fetch products from the backend API and build the catalog
+  async function loadCatalog() {
+    const grid = document.getElementById('product-grid');
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+      const products = await response.json();
+      buildCatalog(products);
+    } catch (error) {
+      console.error("Failed to load products:", error);
+      grid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #999;">
+        Unable to load products right now. Please try again shortly.
+      </p>`;
+    }
+  }
+
+  loadCatalog();
+</script>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
