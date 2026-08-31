@@ -41,20 +41,30 @@ mongoose.connect(process.env.MONGODB_URI)
       }
     });
 
-    // CREATE a new product — admin only, accepts one image file upload
-    app.post("/api/products", adminAuth, upload.single("image"), async (req, res) => {
+    // CREATE a new product — admin only, accepts multiple color images
+    // (one image per color, up to 10 colors per product)
+    app.post("/api/products", adminAuth, upload.array("images", 10), async (req, res) => {
       try {
         const { name, category, description, colorData } = req.body;
 
-        // colorData arrives as a JSON string from the form — parse it
-        // back into a real array before saving.
+        // colorData arrives as a JSON string listing each color's
+        // skuCode, color name, and price (but NOT the image yet —
+        // the image files arrive separately in req.files).
         const colors = JSON.parse(colorData);
 
-        // If an image file was uploaded, multer + Cloudinary already
-        // processed it and req.file.path now holds the live Cloudinary URL.
-        if (req.file) {
-          colors[0].image = req.file.path;
+        // req.files is an array of uploaded images, in the SAME ORDER
+        // the admin form attached them. We match each uploaded image
+        // to its corresponding color by position (index).
+        if (!req.files || req.files.length !== colors.length) {
+          return res.status(400).json({
+            success: false,
+            message: "Each color must have exactly one image."
+          });
         }
+
+        colors.forEach((color, index) => {
+          color.image = req.files[index].path;
+        });
 
         const newProduct = new Product({
           name,
