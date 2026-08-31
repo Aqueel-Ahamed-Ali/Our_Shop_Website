@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
-const Product = require("./models/product.js");
+const Product = require("./models/Product.js");
 
 const app = express();
 const PORT = 3000;
@@ -44,4 +44,4 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch((error) => {
     console.error("MongoDB connection failed:");
     console.error(error);
-  });
+  }); 
