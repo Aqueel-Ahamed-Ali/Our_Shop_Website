@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Add Product — LAALIB</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f5;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .admin-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 24px;
+    }
+
+    /* ===== PASSWORD GATE ===== */
+    .password-gate {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .password-gate.unlocked {
+      display: none;
+    }
+
+    .password-gate label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .password-gate input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .password-gate button {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: #e6f7ea;
+      color: #146c2e;
+      border: 1px solid #b8e6c4;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    /* ===== FORM ===== */
+    #product-form {
+      display: none;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    #product-form.visible {
+      display: block;
+    }
+
+    .field-group {
+      margin-bottom: 18px;
+    }
+
+    .field-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    .field-group input,
+    .field-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .field-group textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .colors-section {
+      border-top: 2px solid #eee;
+      padding-top: 18px;
+      margin-top: 18px;
+    }
+
+    .colors-section > label {
+      font-weight: 700;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .color-row {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .color-row-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .remove-color-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1;
+    }
+
+    .add-color-btn {
+      background: #ffffff;
+      border: 1px dashed #a68a5b;
+      color: #a68a5b;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #form-message {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    #form-message.success {
+      display: block;
+      background: #e6f7ea;
+      color: #146c2e;
+      border: 1px solid #b8e6c4;
+    }
+
+    #form-message.error {
+      display: block;
+      background: #fbe9e7;
+      color: #b71c1c;
+      border: 1px solid #f5c6c2;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    <h1>Admin — Add New Product</h1>
+
+    <!-- PASSWORD GATE -->
+    <div class="password-gate" id="password-gate">
+      <label for="admin-password-input">Enter Admin Password</label>
+      <input type="password" id="admin-password-input" placeholder="Password">
+      <button type="button" id="unlock-btn">Unlock</button>
+      <p id="password-error" style="color:#b71c1c; margin-top:10px; font-size:0.9rem;"></p>
+    </div>
+
+    <div id="unlocked-badge" style="display:none;">
+      <span class="status-badge">🔓 Admin unlocked</span>
+    </div>
+
+    <!-- PRODUCT FORM -->
+    <form id="product-form">
+      <div class="field-group">
+        <label for="name">Product Name</label>
+        <input type="text" id="name" name="name" required placeholder="e.g. Classic Leather Item">
+      </div>
+
+      <div class="field-group">
+        <label for="category">Category</label>
+        <input type="text" id="category" name="category" required placeholder="e.g. Housecoat Material">
+      </div>
+
+      <div class="field-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" required placeholder="Short description shown on the product page"></textarea>
+      </div>
+
+      <div class="colors-section">
+        <label>Colors (each needs its own image)</label>
+        <div id="color-rows"></div>
+        <button type="button" class="add-color-btn" id="add-color-btn">+ Add Another Color</button>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">Create Product</button>
+
+      <div id="form-message"></div>
+    </form>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:3000/api/products";
+
+    // Stored only in memory for this tab — cleared on refresh/close, by design.
+    let adminPassword = null;
+
+    // ---- PASSWORD GATE ----
+    document.getElementById('unlock-btn').addEventListener('click', async () => {
+      const input = document.getElementById('admin-password-input').value;
+      const errorEl = document.getElementById('password-error');
+
+      if (!input) {
+        errorEl.textContent = "Please enter a password.";
+        return;
+      }
+
+      // We verify the password by attempting a real request — the backend
+      // will reject it with 401 if wrong, so we know instantly if it's valid.
+      try {
+        const testResponse = await fetch(API_URL, {
+          method: "POST",
+          headers: { "x-admin-password": input },
+          body: new FormData() // empty test request just to check auth
+        });
+
+        if (testResponse.status === 401) {
+          errorEl.textContent = "Incorrect password.";
+          return;
+        }
+
+        // Any other response (even a validation error) means the password
+        // itself was accepted — we just sent an incomplete test request.
+        adminPassword = input;
+        document.getElementById('password-gate').classList.add('unlocked');
+        document.getElementById('unlocked-badge').style.display = 'block';
+        document.getElementById('product-form').classList.add('visible');
+        errorEl.textContent = "";
+
+      } catch (err) {
+        errorEl.textContent = "Could not reach the server. Is it running?";
+      }
+    });
+
+    // ---- COLOR ROWS ----
+    let colorRowCount = 0;
+
+    function addColorRow() {
+      colorRowCount++;
+      const rowId = `color-row-${colorRowCount}`;
+
+      const rowHtml = `
+        <div class="color-row" id="${rowId}">
+          <button type="button" class="remove-color-btn" data-target="${rowId}">✕</button>
+          <div class="color-row-grid">
+            <div>
+              <label style="font-size:0.8rem;">Color Name</label>
+              <input type="text" class="color-name" required placeholder="e.g. Black">
+            </div>
+            <div>
+              <label style="font-size:0.8rem;">SKU Code</label>
+              <input type="text" class="color-sku" required placeholder="e.g. CLI-BLK">
+            </div>
+          </div>
+          <div class="color-row-grid">
+            <div>
+              <label style="font-size:0.8rem;">Price (Rs.)</label>
+              <input type="number" class="color-price" required min="0" placeholder="e.g. 4999">
+            </div>
+            <div>
+              <label style="font-size:0.8rem;">Image</label>
+              <input type="file" class="color-image" accept="image/*" required>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('color-rows').insertAdjacentHTML('beforeend', rowHtml);
+    }
+
+    document.getElementById('add-color-btn').addEventListener('click', addColorRow);
+
+    document.getElementById('color-rows').addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-color-btn')) {
+        const targetId = e.target.dataset.target;
+        document.getElementById(targetId).remove();
+      }
+    });
+
+    // Start with one color row visible by default
+    addColorRow();
+
+    // ---- FORM SUBMISSION ----
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submit-btn');
+      const messageEl = document.getElementById('form-message');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating...";
+      messageEl.className = '';
+      messageEl.textContent = '';
+
+      try {
+        const name = document.getElementById('name').value;
+        const category = document.getElementById('category').value;
+        const description = document.getElementById('description').value;
+
+        const colorRows = document.querySelectorAll('.color-row');
+        if (colorRows.length === 0) {
+          throw new Error("Add at least one color.");
+        }
+
+        const colorData = [];
+        const formData = new FormData();
+
+        colorRows.forEach(row => {
+          const color = row.querySelector('.color-name').value;
+          const skuCode = row.querySelector('.color-sku').value;
+          const price = Number(row.querySelector('.color-price').value);
+          const imageFile = row.querySelector('.color-image').files[0];
+
+          if (!imageFile) {
+            throw new Error(`Please choose an image for color "${color}".`);
+          }
+
+          // Text data for this color (image is NOT included here — it
+          // goes separately below, matched by order).
+          colorData.push({ color, skuCode, price });
+
+          // Images are appended in the SAME ORDER as colorData, which the
+          // backend relies on to match each image to the right color.
+          formData.append("images", imageFile);
+        });
+
+        formData.append("name", name);
+        formData.append("category", category);
+        formData.append("description", description);
+        formData.append("colorData", JSON.stringify(colorData));
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "x-admin-password": adminPassword },
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Failed to create product.");
+        }
+
+        messageEl.classList.add('success');
+        messageEl.textContent = `✅ "${result.product.name}" created successfully!`;
+
+        // Reset the form for the next product
+        document.getElementById('product-form').reset();
+        document.getElementById('color-rows').innerHTML = '';
+        addColorRow();
+
+      } catch (error) {
+        messageEl.classList.add('error');
+        messageEl.textContent = `❌ ${error.message}`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Create Product";
+      }
+    });
+  </script>
+
+</body>
+</html>
