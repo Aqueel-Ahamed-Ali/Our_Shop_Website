@@ -367,13 +367,19 @@
   </footer>
   <!-- FOOTER END -->
 
-  <script src="products.js"></script>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
+    const API_URL = "http://localhost:3000/api/products";
     const SHOP_WHATSAPP_NUMBER = "94707345670";
 
-    // ---- HELPER & RENDER FUNCTIONS (Declared first) ----
+    // ---- HELPER FUNCTIONS ----
+
+    // Format a number as Sri Lankan Rupees, e.g. 4999 -> "Rs. 4,999"
+    // (used to live in products.js — now lives here since products.js is retired)
+    function formatPrice(amount) {
+      return "Rs. " + amount.toLocaleString("en-LK");
+    }
 
     function renderNotFound(pageContent) {
       pageContent.innerHTML = `
@@ -539,28 +545,43 @@
       });
     }
 
-    function renderRelated(currentProduct) {
-      const others = PRODUCTS.filter(p => p.id !== currentProduct.id).slice(0, 4);
-      if (others.length === 0) return;
-
+    // Fetches ALL products from the API, then filters out the current one.
+    // (Previously this filtered a local PRODUCTS array — now it needs its own fetch.)
+    async function renderRelated(currentProduct) {
       const section = document.getElementById('related-section');
-      section.innerHTML = `
-        <h2 class="related-title">You May Also Like</h2>
-        <div class="related-grid">
-          ${others.map(p => {
-            const preview = p.colors[0];
-            return `
-              <a class="related-card" href="product.html?id=${p.id}">
-                <img src="${preview.image}" alt="${p.name}">
-                <div class="rc-info">
-                  <p class="rc-title">${p.name}</p>
-                  <p class="rc-price">${formatPrice(preview.price)}</p>
-                </div>
-              </a>
-            `;
-          }).join('')}
-        </div>
-      `;
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
+        const allProducts = await response.json();
+
+        const others = allProducts
+          .filter(p => p._id !== currentProduct._id)
+          .slice(0, 4);
+
+        if (others.length === 0) return;
+
+        section.innerHTML = `
+          <h2 class="related-title">You May Also Like</h2>
+          <div class="related-grid">
+            ${others.map(p => {
+              const preview = p.colors[0];
+              return `
+                <a class="related-card" href="product.html?id=${p._id}">
+                  <img src="${preview.image}" alt="${p.name}">
+                  <div class="rc-info">
+                    <p class="rc-title">${p.name}</p>
+                    <p class="rc-price">${formatPrice(preview.price)}</p>
+                  </div>
+                </a>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } catch (error) {
+        // Related products are a nice-to-have, not critical — if this fails,
+        // we just leave the section empty rather than breaking the whole page.
+        console.error("Failed to load related products:", error);
+      }
     }
 
     function renderProduct(product, pageContent) {
@@ -622,17 +643,36 @@
       document.getElementById('order-btn').addEventListener('click', handleOrderClick);
     }
 
-    // ---- MAIN INITIALIZATION ----
-    const params = new URLSearchParams(window.location.search);
-    const productId = params.get('id');
-    const product = getProductById(productId);
-    const pageContent = document.getElementById('page-content');
-
-    if (!product) {
-      renderNotFound(pageContent);
-    } else {
-      renderProduct(product, pageContent);
+    // Fetches a single product by its MongoDB _id from the API.
+    // Returns null if not found or if the request fails, so the caller
+    // can show the "Product Not Found" screen either way.
+    async function fetchProductById(id) {
+      try {
+        const response = await fetch(`${API_URL}/${id}`);
+        if (!response.ok) return null;
+        return await response.json();
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+        return null;
+      }
     }
+
+    // ---- MAIN INITIALIZATION ----
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const productId = params.get('id');
+      const pageContent = document.getElementById('page-content');
+
+      const product = productId ? await fetchProductById(productId) : null;
+
+      if (!product) {
+        renderNotFound(pageContent);
+      } else {
+        renderProduct(product, pageContent);
+      }
+    }
+
+    init();
   </script>
 
 </body>
