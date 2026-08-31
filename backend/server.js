@@ -86,6 +86,79 @@ mongoose.connect(process.env.MONGODB_URI)
       }
     });
 
+    // UPDATE an existing product — admin only.
+    // Accepts new images ONLY for colors that got a new file; colors
+    // keeping their existing image are marked in colorData instead.
+    app.put("/api/products/:id", adminAuth, upload.array("images", 10), async (req, res) => {
+      try {
+        const { name, category, description, colorData } = req.body;
+
+        // Each entry looks like either:
+        //   { color, skuCode, price, keepExistingImage: true, existingImage: "https://..." }
+        //   { color, skuCode, price, keepExistingImage: false }  <- expects a new file
+        const colors = JSON.parse(colorData);
+
+        // req.files only contains NEW uploads, in order, for colors that
+        // are NOT keeping their existing image. We track a separate
+        // pointer into req.files as we walk through colors.
+        let fileIndex = 0;
+
+        colors.forEach(color => {
+          if (color.keepExistingImage) {
+            color.image = color.existingImage;
+          } else {
+            if (!req.files[fileIndex]) {
+              throw new Error(`Missing image file for color "${color.color}".`);
+            }
+            color.image = req.files[fileIndex].path;
+            fileIndex++;
+          }
+          // Clean up helper fields — they're not part of our schema
+          delete color.keepExistingImage;
+          delete color.existingImage;
+        });
+
+        const updatedProduct = await Product.findByIdAndUpdate(
+          req.params.id,
+          { name, category, description, colors },
+          { new: true, runValidators: true }
+        );
+
+        if (!updatedProduct) {
+          return res.status(404).json({ success: false, message: "Product not found." });
+        }
+
+        res.json({
+          success: true,
+          message: "Product updated successfully.",
+          product: updatedProduct
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message || "Failed to update product." });
+      }
+    });
+
+    // DELETE a product — admin only.
+    app.delete("/api/products/:id", adminAuth, async (req, res) => {
+      try {
+        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+
+        if (!deletedProduct) {
+          return res.status(404).json({ success: false, message: "Product not found." });
+        }
+
+        res.json({
+          success: true,
+          message: "Product deleted successfully.",
+          product: deletedProduct
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Failed to delete product." });
+      }
+    });
+
     app.listen(PORT, () => {
       console.log(`ABG LAALIB server running on http://localhost:${PORT}`);
     });
