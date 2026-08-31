@@ -11,3 +11,5 @@ cloudinary.config({
 });
 
 module.exports = cloudinary;
+
+//this file is used to configure the Cloudinary SDK with the credentials stored in the .env file. It allows other parts of the backend to import this configuration and interact with Cloudinary for image uploads and management.
