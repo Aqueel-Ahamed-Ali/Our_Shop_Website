@@ -280,6 +280,34 @@
       color: #999;
       padding: 20px;
     }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .edit-btn, .delete-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .edit-btn {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .delete-btn {
+      background: #fbe9e7;
+      color: #b71c1c;
+    }
+
+    .edit-btn:hover, .delete-btn:hover {
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -358,13 +386,11 @@
         return;
       }
 
-      // We verify the password by attempting a real request — the backend
-      // will reject it with 401 if wrong, so we know instantly if it's valid.
       try {
         const testResponse = await fetch(API_URL, {
           method: "POST",
           headers: { "x-admin-password": input },
-          body: new FormData() // empty test request just to check auth
+          body: new FormData()
         });
 
         if (testResponse.status === 401) {
@@ -372,8 +398,6 @@
           return;
         }
 
-        // Any other response (even a validation error) means the password
-        // itself was accepted — we just sent an incomplete test request.
         adminPassword = input;
         document.getElementById('password-gate').classList.add('unlocked');
         document.getElementById('unlocked-badge').style.display = 'block';
@@ -467,12 +491,7 @@
             throw new Error(`Please choose an image for color "${color}".`);
           }
 
-          // Text data for this color (image is NOT included here — it
-          // goes separately below, matched by order).
           colorData.push({ color, skuCode, price });
-
-          // Images are appended in the SAME ORDER as colorData, which the
-          // backend relies on to match each image to the right color.
           formData.append("images", imageFile);
         });
 
@@ -497,7 +516,6 @@
         messageEl.textContent = `✅ "${result.product.name}" created successfully!`;
         loadProductsList();
 
-        // Reset the form for the next product
         document.getElementById('product-form').reset();
         document.getElementById('color-rows').innerHTML = '';
         addColorRow();
@@ -537,6 +555,12 @@
               </td>
               <td><span class="color-count-badge">${product.colors.length} color${product.colors.length > 1 ? 's' : ''}</span></td>
               <td>${formatPrice(preview.price)}${product.colors.length > 1 ? ' +' : ''}</td>
+              <td>
+                <div class="action-buttons">
+                  <button type="button" class="edit-btn" data-id="${product._id}">Edit</button>
+                  <button type="button" class="delete-btn" data-id="${product._id}" data-name="${product.name}">Delete</button>
+                </div>
+              </td>
             </tr>
           `;
         }).join('');
@@ -549,6 +573,7 @@
                 <th>Product</th>
                 <th>Colors</th>
                 <th>Price</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
@@ -559,6 +584,40 @@
         container.innerHTML = '<p class="list-empty">Could not load products. Is the server running?</p>';
       }
     }
+
+    // ---- DELETE PRODUCT ----
+    document.getElementById('products-list-container').addEventListener('click', async (e) => {
+      if (!e.target.classList.contains('delete-btn')) return;
+
+      const id = e.target.dataset.id;
+      const name = e.target.dataset.name;
+
+      if (!adminPassword) {
+        alert("Please unlock the admin panel first.");
+        return;
+      }
+
+      const confirmed = confirm(`Delete "${name}"? This cannot be undone.`);
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch(`${API_URL}/${id}`, {
+          method: "DELETE",
+          headers: { "x-admin-password": adminPassword }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Failed to delete product.");
+        }
+
+        loadProductsList();
+
+      } catch (error) {
+        alert(`Error: ${error.message}`);
+      }
+    });
 
     document.getElementById('refresh-btn').addEventListener('click', loadProductsList);
 
